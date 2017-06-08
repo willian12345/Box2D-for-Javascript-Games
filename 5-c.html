@@ -1,0 +1,136 @@
+<html>
+   <head>
+      <title>Box2dJS</title>
+      <style>
+         .wrap{
+            position: relative;
+         }
+         .info{
+            position: absolute;
+            left: 0;
+            top: 0;
+            color: #fff
+         }
+         canvas{
+            position: absolute;
+         }
+      </style>
+   </head>
+   <body onload="init();">
+      <div class="wrap">
+         <canvas id="canvas" width="640" height="480" style="background-color:#333333;" ></canvas>
+         <canvas id="debug" width="640" height="480"></canvas>
+         <div class="info" id="textMon">
+         </div>
+      </div>
+   </body>
+   <script src="js/Box2d.min.js"></script>
+   <script src="js/createjs-2015.11.26.min.js"></script>
+   <script src="js/jquery.min2.0.3.js"></script>
+   <script>
+      function init() {
+         var   b2Vec2 = Box2D.Common.Math.b2Vec2
+            ,  b2AABB = Box2D.Collision.b2AABB
+            ,  b2BodyDef = Box2D.Dynamics.b2BodyDef
+            ,  b2Body = Box2D.Dynamics.b2Body
+            ,  b2FixtureDef = Box2D.Dynamics.b2FixtureDef
+            ,  b2Fixture = Box2D.Dynamics.b2Fixture
+            ,  b2World = Box2D.Dynamics.b2World
+            ,  b2MassData = Box2D.Collision.Shapes.b2MassData
+            ,  b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape
+            ,  b2CircleShape = Box2D.Collision.Shapes.b2CircleShape
+            ,  b2DebugDraw = Box2D.Dynamics.b2DebugDraw
+            ,  b2MouseJointDef =  Box2D.Dynamics.Joints.b2MouseJointDef
+            ;
+         var worldScale = 30; // box2d中以米为单位，1米=30像素
+         var gravity = new b2Vec2(0, 5);
+         var sleep = true;
+         var world;
+         var stage,debug;
+
+
+         function main(){
+            stage = new createjs.Stage("canvas");
+            debug = new createjs.Stage("debug");
+
+            setupPhysics();
+
+            debugDraw();
+
+            debug.on("stagemousedown", stagemousedown);
+
+            createjs.Ticker.timingMode = createjs.Ticker.RAF;
+            createjs.Ticker.on("tick", function(){
+               stage.update();
+               world.DrawDebugData(); // 为了显示出createjs对象，这里不再绘制box2d对象至canvas
+               world.Step(1/30, 10, 10);// 更新世界模拟
+               world.ClearForces(); // 清除作用力
+            });
+         }
+         main();
+
+
+         function Ball(){
+            this.view = new createjs.Bitmap('soccer.png');
+            this.view.regX = this.view.regY = 50;
+
+            // 创建box2d球形体
+            var bodyDef = new b2BodyDef();
+            bodyDef.position.Set(Math.random()*640 / worldScale, 0/worldScale);
+            bodyDef.type = b2Body.b2_dynamicBody
+            bodyDef.userData = 0;
+            var circleShape = new b2CircleShape(50 / worldScale);
+            var fixtureDef = new b2FixtureDef();
+            fixtureDef.shape = circleShape;
+            fixtureDef.density = 1;
+            fixtureDef.restitution = .4
+            fixtureDef.friction = .5;
+            this.view.body = world.CreateBody(bodyDef);
+            this.view.body.CreateFixture(fixtureDef);
+
+            this.view.on("tick", function(){
+               // 让createjs的bitmap对象实时复制box2d对象的位置与旋转角度
+               this.x = this.body.GetPosition().x * worldScale;
+               this.y = this.body.GetPosition().y * worldScale;
+               this.rotation = this.body.GetAngle() * (180 / Math.PI);
+            });
+         }
+         
+         function setupPhysics(){
+            world = new b2World(new b2Vec2(0, 50), true);
+            floor();  
+         }
+
+         function stagemousedown(){
+            var b = new Ball();
+            stage.addChild(b.view); // 将产生的createjs对象添加至舞台上
+         }
+
+         function floor(){
+            var bodyDef = new b2BodyDef();
+            bodyDef.position.Set(320/worldScale, 465/worldScale);
+            var polygonShape = new b2PolygonShape();
+            polygonShape.SetAsBox(320/worldScale, 15/worldScale);
+            var fixtureDef = new b2FixtureDef();
+            fixtureDef.shape = polygonShape;
+            fixtureDef.restitution = .4;
+            fixtureDef.friction = .5;
+            var theFloor = world.CreateBody(bodyDef);
+            theFloor.CreateFixture(fixtureDef);
+         }
+
+         //setup debug draw
+         function debugDraw(){
+            var debugDraw = new b2DebugDraw();
+            debugDraw.SetSprite(debug.canvas.getContext('2d'));
+            debugDraw.SetDrawScale(worldScale);
+            debugDraw.SetFillAlpha(0.5);
+            debugDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit);
+            world.SetDebugDraw(debugDraw);
+         }
+      };
+   
+   </script>
+   
+   
+</html>

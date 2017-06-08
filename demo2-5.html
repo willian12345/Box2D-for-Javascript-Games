@@ -1,27 +1,11 @@
 <html>
    <head>
       <title>Box2dJS</title>
-      <style>
-         .wrap{
-            position: relative;
-         }
-         .info{
-            position: absolute;
-            left: 0;
-            top: 0;
-            color: #fff
-         }
-      </style>
    </head>
    <body onload="init();">
-      <div class="wrap">
-         <canvas id="canvas" width="640" height="480" style="background-color:#333333;" ></canvas>
-         <div class="info" id="textMon">
-         </div>
-      </div>
+      <canvas id="canvas" width="640" height="480" style="background-color:#333333;" ></canvas>
    </body>
    <script src="js/Box2d.min.js"></script>
-   <script src="js/jquery.min2.0.3.js"></script>
    <script>
       
       function init() {
@@ -45,67 +29,52 @@
          var world;
          var velIterations = 10;// 速率约束解算器
          var posIterations = 10;// 位置约束解算器
-         var sphereVector;
+
          function main(){
             world = new b2World(gravity, sleep);
             debugDraw();
-            floor();
-
-            // sphereVector = new Vector(); // Vector对象定义在box2d 70行位置 估计会被删除 var Vector = Array;
-            sphereVector = [];
-            for(var i=0; i<3; i++){
-               sphereVector.push(sphere(170+i*150, 410, 40));
-            }
-
-            var force = new b2Vec2(0 ,-15);
-            var forceByMass = force.Copy();
-            forceByMass.Multiply(sphereVector[1].GetMass());
-            var forceByMassByTime = forceByMass.Copy();
-            forceByMassByTime.Multiply(30);
-            var sphereCenter = sphereVector[0].GetWorldCenter();
-            sphereVector[0].ApplyForce(forceByMassByTime, sphereCenter);
-            sphereCenter = sphereVector[1].GetWorldCenter();
-            sphereVector[1].ApplyImpulse(forceByMass, sphereCenter);
-            sphereVector[2].SetLinearVelocity(force);
-
-
-
-
+            brick(275,435,30,30);
+            brick(365,435,30,30);
+            brick(320,405,120,30);
+            brick(320,375,60,30);
+            brick(305,345,90,30);
+            brick(320,300,120,60);
+            idol(320, 242);
             setInterval(updateWorld, 1000 / 60);
          }
          main();
-         
 
-         function sphere(px, py, r){
+         function brick(px, py, w, h){
+
             var bodyDef = new b2BodyDef();
             bodyDef.position.Set(px/worldScale, py/worldScale);
-            bodyDef.type = b2Body.b2_dynamicBody
-            bodyDef.userData = py;
-            var circleShape = new b2CircleShape(r/worldScale);
-            var fixtureDef = new b2FixtureDef();
-            fixtureDef.shape = circleShape;
-            fixtureDef.density = 1;
-            fixtureDef.restitution = .4
-            fixtureDef.friction = .5;
-            var theSphere = world.CreateBody(bodyDef);
-            theSphere.CreateFixture(fixtureDef);
-            return theSphere;
-         }
-
-         function floor(){
-            var bodyDef = new b2BodyDef();
-            bodyDef.position.Set(320/worldScale, 465/worldScale);
+            // bodyDef.type = b2Body.b2_dynamicBody;
             var polygonShape = new b2PolygonShape();
-            polygonShape.SetAsBox(320/worldScale, 15/worldScale);
+            polygonShape.SetAsBox(w/2/worldScale, h/2/worldScale);
             var fixtureDef = new b2FixtureDef();
             fixtureDef.shape = polygonShape;
+            fixtureDef.density = 2;
             fixtureDef.restitution = .4;
             fixtureDef.friction = .5;
-            var theFloor = world.CreateBody(bodyDef);
-            theFloor.CreateFixture(fixtureDef);
+            var theBrick = world.CreateBody(bodyDef);
+            theBrick.CreateFixture(fixtureDef);
          }
 
-         
+         function idol(px, py){
+            var bodyDef = new b2BodyDef();
+            bodyDef.position.Set(px/worldScale, py/worldScale);
+            // bodyDef.type = b2Body.b2_dynamicBody;
+            var polygonShape = new b2PolygonShape();
+            polygonShape.SetAsBox(5/worldScale, 20/worldScale);
+            var fixtureDef = new b2FixtureDef();
+            fixtureDef.shape = polygonShape;
+            fixtureDef.density = 1;
+            fixtureDef.restitution = .4;
+            fixtureDef.friction = .5;
+            var theIdol = world.CreateBody(bodyDef);
+            theIdol.CreateFixture(fixtureDef);
+         }
+
          function updateWorld() {
             world.Step(1/30, 10, 10);// 更新世界模拟
             world.DrawDebugData(); // 显示刚体debug轮廓

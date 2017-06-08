@@ -1,0 +1,138 @@
+<html>
+   <head>
+      <title>Box2dJS</title>
+   </head>
+   <body onload="init();">
+      <canvas id="canvas" width="640" height="480" style="background-color:#333333;" ></canvas>
+   </body>
+   <script src="js/Box2d.min.js"></script>
+   <script>
+      
+      function init() {
+         var   b2Vec2 = Box2D.Common.Math.b2Vec2
+            ,  b2AABB = Box2D.Collision.b2AABB
+            ,  b2BodyDef = Box2D.Dynamics.b2BodyDef
+            ,  b2Body = Box2D.Dynamics.b2Body
+            ,  b2FixtureDef = Box2D.Dynamics.b2FixtureDef
+            ,  b2Fixture = Box2D.Dynamics.b2Fixture
+            ,  b2World = Box2D.Dynamics.b2World
+            ,  b2MassData = Box2D.Collision.Shapes.b2MassData
+            ,  b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape
+            ,  b2CircleShape = Box2D.Collision.Shapes.b2CircleShape
+            ,  b2DebugDraw = Box2D.Dynamics.b2DebugDraw
+            ,  b2MouseJointDef =  Box2D.Dynamics.Joints.b2MouseJointDef
+            ;
+
+         var worldScale = 30; // box2d中以米为单位，1米=30像素
+         var gravity = new b2Vec2(0, 5);
+         var sleep = true;
+         var world;
+         var velIterations = 10;// 速率约束解算器
+         var posIterations = 10;// 位置约束解算器
+
+         function main(){
+            world = new b2World(gravity, sleep);
+            debugDraw();
+            brick(275,435,30,30);
+            brick(365,435,30,30);
+            brick(320,405,120,30);
+            brick(320,375,60,30);
+            brick(305,345,90,30);
+            brick(320,300,120,60);
+            idol(320, 242);
+            floor();
+            setInterval(updateWorld, 1000 / 60);
+         }
+         main();
+
+         function brick(px, py, w, h){
+
+            var bodyDef = new b2BodyDef();
+            bodyDef.position.Set(px/worldScale, py/worldScale);
+            bodyDef.type = b2Body.b2_dynamicBody;
+            var polygonShape = new b2PolygonShape();
+            polygonShape.SetAsBox(w/2/worldScale, h/2/worldScale);
+            var fixtureDef = new b2FixtureDef();
+            fixtureDef.shape = polygonShape;
+            fixtureDef.density = 2;
+            fixtureDef.restitution = .4;
+            fixtureDef.friction = .5;
+            var theBrick = world.CreateBody(bodyDef);
+            theBrick.CreateFixture(fixtureDef);
+         }
+
+         function idol(px, py){
+            var bodyDef = new b2BodyDef();
+            bodyDef.position.Set(px/worldScale, py/worldScale);
+            bodyDef.type = b2Body.b2_dynamicBody;
+            var polygonShape = new b2PolygonShape();
+            polygonShape.SetAsBox(5/worldScale, 20/worldScale);
+            var fixtureDef = new b2FixtureDef();
+            fixtureDef.shape = polygonShape;
+            fixtureDef.density = 1;
+            fixtureDef.restitution = .4;
+            fixtureDef.friction = .5;
+            var theIdol = world.CreateBody(bodyDef);
+            theIdol.CreateFixture(fixtureDef);
+
+            // 创建定向矩形
+            var bW = 5/worldScale;
+            var bH = 20/worldScale;
+            var boxPos = new b2Vec2(0, 10/worldScale);// 可以使用矩形内的相对位置
+            var boxAngle = -Math.PI / 4;
+            // 左倾矩形
+            polygonShape.SetAsOrientedBox(bW, bH, boxPos, boxAngle);
+            fixtureDef.shape = polygonShape;
+            theIdol.CreateFixture(fixtureDef);
+
+            // 右倾矩形
+            boxAngle = Math.PI / 4;
+            polygonShape.SetAsOrientedBox(bW, bH, boxPos, boxAngle);
+            fixtureDef.shape = polygonShape;
+            theIdol.CreateFixture(fixtureDef);
+
+            // 用多边形方式创建凸多边形
+            var vertices = new Box2D.NVector();
+            vertices.push(new b2Vec2(-15/worldScale,-25/worldScale));
+            vertices.push(new b2Vec2(0,-90/worldScale));
+            vertices.push(new b2Vec2(15/worldScale, -25/worldScale));
+            vertices.push(new b2Vec2(0,-10/worldScale));
+            polygonShape.SetAsVector(vertices, 4);
+            fixtureDef.shape = polygonShape;
+            theIdol.CreateFixture(fixtureDef);
+         }
+
+         function floor(){
+            var bodyDef = new b2BodyDef();
+            bodyDef.position.Set(320/worldScale, 465/worldScale);
+            var polygonShape = new b2PolygonShape();
+            polygonShape.SetAsBox(320/worldScale, 15/worldScale);
+            var fixtureDef = new b2FixtureDef();
+            fixtureDef.shape = polygonShape;
+            fixtureDef.restitution = .4;
+            fixtureDef.friction = .5;
+            var theFloor = world.CreateBody(bodyDef);
+            theFloor.CreateFixture(fixtureDef);
+         }
+
+         function updateWorld() {
+            world.Step(1/30, 10, 10);// 更新世界模拟
+            world.DrawDebugData(); // 显示刚体debug轮廓
+            world.ClearForces(); // 清除作用力
+         }
+
+         //setup debug draw
+         function debugDraw(){
+            var debugDraw = new b2DebugDraw();
+            debugDraw.SetSprite(document.getElementById("canvas").getContext("2d"));
+            debugDraw.SetDrawScale(worldScale);
+            debugDraw.SetFillAlpha(0.5);
+            debugDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit);
+            world.SetDebugDraw(debugDraw);
+         }
+      };
+   
+   </script>
+   
+   
+</html>

@@ -21,6 +21,7 @@
       </div>
    </body>
    <script src="js/Box2d.min.js"></script>
+   <script src="js/createjs-2015.11.26.min.js"></script>
    <script src="js/jquery.min2.0.3.js"></script>
    <script>
       
@@ -43,38 +44,73 @@
          var gravity = new b2Vec2(0, 5);
          var sleep = true;
          var world;
-         var velIterations = 10;// 速率约束解算器
-         var posIterations = 10;// 位置约束解算器
-         var sphereVector;
+         
+         var theBird = new createjs.Shape(); //var theBird = new Sprite();
+         var slingX = 100;
+         var slingY = 250;
+         var slingR = 75;
+         var stage = new createjs.Stage("canvas");
          function main(){
             world = new b2World(gravity, sleep);
             debugDraw();
             floor();
 
-            // sphereVector = new Vector(); // Vector对象定义在box2d 70行位置 估计会被删除 var Vector = Array;
-            sphereVector = [];
-            for(var i=0; i<3; i++){
-               sphereVector.push(sphere(170+i*150, 410, 40));
-            }
+            brick(402,431,140,36);
+            brick(544,431,140,36);
+            brick(342,396,16,32);
+            brick(604,396,16,32);
 
-            var force = new b2Vec2(0 ,-15);
-            var forceByMass = force.Copy();
-            forceByMass.Multiply(sphereVector[1].GetMass());
-            var forceByMassByTime = forceByMass.Copy();
-            forceByMassByTime.Multiply(30);
-            var sphereCenter = sphereVector[0].GetWorldCenter();
-            sphereVector[0].ApplyForce(forceByMassByTime, sphereCenter);
-            sphereCenter = sphereVector[1].GetWorldCenter();
-            sphereVector[1].ApplyImpulse(forceByMass, sphereCenter);
-            sphereVector[2].SetLinearVelocity(force);
+            brick(416,347,16,130);
+            brick(532,347,16,130);
+            brick(474,273,132,16);
+            brick(474,257,32,16);
 
+            brick(445,199,16,130);
+            brick(503,199,16,130);
+            brick(474,125,58,16);
+            brick(474,100,32,32);
+            brick(474,67,16,32);
 
+            brick(474,404,64,16);
+            brick(450,363,16,64);
+            brick(498,363,16,64);
+            brick(474,322,64,16);
 
+            var circle = new createjs.Shape();
+            
+            // var circle = new createjs.Shape();
+            circle.graphics.beginFill("DeepSkyBlue").drawCircle(0, 0, 50);
+            circle.x = 100;
+            circle.y = 100;
+            stage.addChild(circle);
+            // theBird.graphics.beginFill(0xffffff).drawCircle(0, 0, 50);
+            // theBird.graphics.drawCircle(0,0,15);
+            // theBird.x = slingX;
+            // theBird.y = slingY;
+
+            // stage.addChild(theBird);
 
             setInterval(updateWorld, 1000 / 60);
          }
          main();
          
+
+         function brick(px, py, w, h, s){
+
+            var bodyDef = new b2BodyDef();
+            bodyDef.position.Set(px/worldScale, py/worldScale);
+            bodyDef.type = b2Body.b2_dynamicBody;
+            bodyDef.userData = s;
+            var polygonShape = new b2PolygonShape();
+            polygonShape.SetAsBox(w/2/worldScale, h/2/worldScale);
+            var fixtureDef = new b2FixtureDef();
+            fixtureDef.shape = polygonShape;
+            fixtureDef.density = 2;
+            fixtureDef.restitution = .4;
+            fixtureDef.friction = .5;
+            var theBrick = world.CreateBody(bodyDef);
+            theBrick.CreateFixture(fixtureDef);
+         }
 
          function sphere(px, py, r){
             var bodyDef = new b2BodyDef();
@@ -107,6 +143,7 @@
 
          
          function updateWorld() {
+            stage.update();
             world.Step(1/30, 10, 10);// 更新世界模拟
             world.DrawDebugData(); // 显示刚体debug轮廓
             world.ClearForces(); // 清除作用力
