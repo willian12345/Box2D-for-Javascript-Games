@@ -12,6 +12,10 @@
 ![image](https://github.com/willian12345/Box2D-for-Javascript-Games/blob/master/img/cover.png?raw=true)
 
 
+文章在博客园更新合集
+
+https://www.cnblogs.com/willian/p/5477922.html
+
 ## 目录
 
 第一章 Hello Box2D World
