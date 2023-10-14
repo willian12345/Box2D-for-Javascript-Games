@@ -2,6 +2,7 @@
    <head>
       <title>Box2dJS</title>
       <style>
+         html,body{padding: 0; margin: 0;}
          .wrap{
             position: relative;
          }
@@ -21,9 +22,7 @@
       </div>
    </body>
    <script src="js/Box2d.min.js"></script>
-   <script src="js/jquery.min2.0.3.js"></script>
    <script>
-      
       function init() {
          var   b2Vec2 = Box2D.Common.Math.b2Vec2
             ,  b2AABB = Box2D.Collision.b2AABB
@@ -46,6 +45,13 @@
          var velIterations = 10;// 速率约束解算器
          var posIterations = 10;// 位置约束解算器
          var mousePVec;
+
+         function destroyBrick(e){
+            var px = e.pageX/worldScale;
+            var py = e.pageY/worldScale;
+            mousePVec = new b2Vec2(px/worldScale, py/worldScale);
+            var test = world.QueryPoint(queryCallback, new b2Vec2(px, py));
+         }
          function main(){
             world = new b2World(gravity, sleep);
             debugDraw();
@@ -58,23 +64,13 @@
             idol(320, 242);
             floor();
             setInterval(updateWorld, 1000 / 60);
-
-            $('#canvas').click(function(e){
-               var px = e.pageX/worldScale;
-               var py = e.pageY/worldScale;
-               mousePVec = new b2Vec2(px/worldScale, py/worldScale);
-               var test = world.QueryPoint(queryCallback, new b2Vec2(px, py));
-               console.log(test);
-            });
+            document.querySelector('#canvas').addEventListener('click', destroyBrick)
          }
          main();
+         
          function queryCallback(fixture){
-            var touchedBody = fixture.GetBody()
-            var userData = touchedBody.GetUserData();
-            if(userData == 'breakable'){
-               world.DestroyBody(touchedBody);
-            }
-            return false;
+            var touchedBody = fixture.GetBody();
+            world.DestroyBody(touchedBody);
          }
 
          function brick(px, py, w, h, s){
@@ -150,7 +146,7 @@
          }
 
          var radToDeg = 180/Math.PI;
-         var idolBody, $text = $('#textMon');
+         var idolBody, $text = document.querySelector('#textMon');
             
          for (var b = world.GetBodyList();
          b; b = b.GetNext()) {
@@ -172,7 +168,7 @@
                var velocity = idolBody.GetLinearVelocity();
                var xVel = Math.round(velocity.x * worldScale);
                var yVel = Math.round(velocity.y * worldScale);
-               $text.html(xPos+','+yPos+'<br/>'+angle+'<br/>'+xVel+','+yVel);
+               $text.innerHTML = (xPos+','+yPos+'<br/>'+angle+'<br/>'+xVel+','+yVel);
             }
          }
 
