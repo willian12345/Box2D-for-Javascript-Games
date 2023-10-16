@@ -101,6 +101,16 @@
          var theBall = world.CreateBody(bodyDef);
          theBall.CreateFixture(fixtureDef);
 
+         bodyDef.position.Set(308/worldScale, 60/ worldScale);
+         bodyDef.type = b2Body.b2_dynamicBody;
+         var circleShape1 = new b2CircleShape(25/worldScale);
+         fixtureDef.shape = circleShape1;
+         fixtureDef.density = 1;
+         fixtureDef.restitution = .6;
+         fixtureDef.friction = .1;
+         var theBall1 = world.CreateBody(bodyDef);
+         theBall1.CreateFixture(fixtureDef);
+
 
          // 定义矩形地面
          bodyDef.position.Set(320/worldScale, 470/worldScale); // 复用定义刚体
