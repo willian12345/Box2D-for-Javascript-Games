@@ -1,0 +1,123 @@
+<html>
+   <head>
+      <title>Box2dJS</title>
+      <style>
+         html,body{padding: 0; margin: 0;}
+      </style>
+   </head>
+   <body onload="init();">
+        <canvas id="canvas" width="640" height="480" style="background-color:#333333;" ></canvas>
+   </body>
+   <script src="../../js/Box2d.min.js"></script>
+   <script>
+      
+      function init() {
+         var   b2Vec2 = Box2D.Common.Math.b2Vec2
+            ,  b2AABB = Box2D.Collision.b2AABB
+         	,	b2BodyDef = Box2D.Dynamics.b2BodyDef
+         	,	b2Body = Box2D.Dynamics.b2Body
+         	,	b2FixtureDef = Box2D.Dynamics.b2FixtureDef
+         	,	b2Fixture = Box2D.Dynamics.b2Fixture
+         	,	b2World = Box2D.Dynamics.b2World
+         	,	b2MassData = Box2D.Collision.Shapes.b2MassData
+         	,	b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape
+         	,	b2CircleShape = Box2D.Collision.Shapes.b2CircleShape
+         	,	b2DebugDraw = Box2D.Dynamics.b2DebugDraw
+            ,  b2MouseJointDef =  Box2D.Dynamics.Joints.b2MouseJointDef
+            ;
+
+         var worldScale = 30; // box2d中以米为单位，1米=30像素
+         var gravity = new b2Vec2(0, 10);
+         var sleep = true;
+         var world;
+         var velIterations = 10;// 速率约束解算器
+         var posIterations = 10;// 位置约束解算器
+         var sphereVector;
+
+         function main(){
+            world = new b2World(gravity, sleep);
+            debugDraw();
+            floor();
+            
+            sphereVector = [];
+            for(var i=0; i<3; i++){
+               sphereVector.push(sphere(170+i*150, 410, 40));
+            }
+
+            var force = new b2Vec2(0 ,-15);
+            var forceByMass = force.Copy();
+            forceByMass.Multiply(sphereVector[1].GetMass());
+            var forceByMassByTime = forceByMass.Copy();
+            forceByMassByTime.Multiply(30);
+            var sphereCenter = sphereVector[0].GetWorldCenter();
+            sphereVector[0].ApplyForce(forceByMassByTime, sphereCenter);
+            sphereCenter = sphereVector[1].GetWorldCenter();
+            sphereVector[1].ApplyImpulse(forceByMass, sphereCenter);
+            sphereVector[2].SetLinearVelocity(force);
+
+            setInterval(updateWorld, 1000 / 60);
+         }
+         main();
+         
+
+         function sphere(px, py, r){
+            var bodyDef = new b2BodyDef();
+            bodyDef.position.Set(px/worldScale, py/worldScale);
+            bodyDef.type = b2Body.b2_dynamicBody
+            bodyDef.userData = py;
+            var circleShape = new b2CircleShape(r/worldScale);
+            var fixtureDef = new b2FixtureDef();
+            fixtureDef.shape = circleShape;
+            fixtureDef.density = 1;
+            fixtureDef.restitution = .4
+            fixtureDef.friction = .5;
+            var theSphere = world.CreateBody(bodyDef);
+            theSphere.CreateFixture(fixtureDef);
+            return theSphere;
+         }
+
+         function floor(){
+            var bodyDef = new b2BodyDef();
+            bodyDef.position.Set(320/worldScale, 465/worldScale);
+            var polygonShape = new b2PolygonShape();
+            polygonShape.SetAsBox(320/worldScale, 15/worldScale);
+            var fixtureDef = new b2FixtureDef();
+            fixtureDef.shape = polygonShape;
+            fixtureDef.restitution = .4;
+            fixtureDef.friction = .5;
+            var theFloor = world.CreateBody(bodyDef);
+            theFloor.CreateFixture(fixtureDef);
+         }
+
+         
+         function updateWorld() {
+            var maxHeight;
+            var currHeight;
+            var outHeight;
+            world.Step(1/30,10,10);
+            for (var i = 0; i<3; i++) {
+               maxHeight=sphereVector[i].GetUserData();
+               currHeight=sphereVector[i].GetPosition().y*worldScale;    maxHeight=Math.min(maxHeight,currHeight);
+               sphereVector[i].SetUserData(maxHeight);
+               outHeight=sphereVector[i].GetUserData();
+               console.log("Sphere "+i+":"+Math.round(outHeight));
+            }
+            world.DrawDebugData(); // 显示刚体debug轮廓
+            world.ClearForces(); // 清除作用力
+         }
+
+         //setup debug draw
+         function debugDraw(){
+            var debugDraw = new b2DebugDraw();
+            debugDraw.SetSprite(document.getElementById("canvas").getContext("2d"));
+            debugDraw.SetDrawScale(worldScale);
+            debugDraw.SetFillAlpha(0.5);
+            debugDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit);
+            world.SetDebugDraw(debugDraw);
+         }
+      };
+   
+   </script>
+   
+   
+</html>
