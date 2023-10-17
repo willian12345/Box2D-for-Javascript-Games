@@ -6,9 +6,11 @@
 
 现在通过之前的学习，基本掌握了刚体等基础概念。那如何如何应用于现实画面中呢？
 
-box2d 只是模拟了物体，是虚拟的，如果不是通过 debug 是看不到任何画面的，要让用户看到画面，必须得结合 canvas 绘图能力，自己操作 canvas 绘图的原始 API 太麻烦，所以就有了 createjs 等其它流行的 canvas 库.
+Box2d 只是模拟了物体，是虚拟的，如果不是通过 debug 是看不到任何画面的，要让用户看到画面，必须得结合 canvas 绘图能力
 
-以下都以createJS代替canvas，当然你用其它库或者直接操作canvas也都可以
+自己直接操作 canvas 绘图的原始 API 太麻烦，所以就有了 createjs、pixi.js、fabric.js 等其它流行的 canvas 库.
+
+以下都以 createJS 代替 canvas，当然你用其它库或者直接操作 canvas 也都可以
 
  
 
@@ -23,7 +25,7 @@ https://github.com/willian12345/Box2D-for-Javascript-Games/blob/master/extra.htm
 
  
 
-box2d呈现于 createJS，贴上图的基本原理，就是将物理引擎世界中刚体的所有状态复制到 createJS 舞台对象！
+Box2d 呈现于 createJS，贴上图的基本原理，就是将物理引擎世界中刚体的所有状态复制到 createJS 舞台对象！
 
  
 ```
@@ -129,9 +131,22 @@ function init() {
          }
       };
 ```
- 
 
-这一句
+注意：**分别使用两个 canvas**
+
+一个用于渲染的 dom id 为 "canvas" 对象
+
+```
+new createjs.Stage("canvas");
+```
+
+另一个用于 Box2d  debug 渲染  dom id 为 "debug"
+
+```
+debug = new createjs.Stage("debug");
+```
+
+这一句引入一张图片
 
 ```
 this.view = new createjs.Bitmap('soccer.png');
@@ -150,20 +165,22 @@ this.view.on("tick", function(){
 });
 ```
 
-在Bitmap对象上侦听 tick 事件，tick 事件可以理解为 FLASH 中的 ENTER_FRAME 事件，即每一帧调用一次，在每帧中将刚体的 x,y 位置属性与角度属性复制到 createJS 的显示对象上，就完成了结合
+在 Bitmap 对象上侦听 tick 事件，tick 事件回调，每一帧调用一次
+
+在每帧中将刚体的 x,y 位置属性与角度属性复制到 createJS 的显示对象上，就完成了结合
 
  
-注释掉这一句，就可以隐藏掉box2Djs的调试状态变成一个正常的带物理效果的足球了
+注释掉这一句，就可以隐藏掉 Box2Djs 的调试状态变成一个正常的带物理效果的足球了
 
 // debugDraw();
 
  
 
-更多关于createJS请至官网或者搜索相关知识，你也完成可以用其它绘图库完成一样的操作，比如Pixi.js
+更多关于createJS请至官网或者搜索相关知识，你也完成可以用其它绘图库完成一样的操作
 
 相关系列：
 
-HTML5之2D物理引擎 Box2D for javascript Games 系列 第一部分
+HTML5 之 2D物理引擎 Box2D for javascript Games 系列 第一章
 
  
 
