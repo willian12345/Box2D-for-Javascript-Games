@@ -19,7 +19,7 @@ box2d 只是模拟了物体，是虚拟的，如果不是通过 debug 是看不�
 
 完成代码位于
 
-https://github.com/willian12345/Box2D-for-Javascript-Games/blob/master/5-c.html
+https://github.com/willian12345/Box2D-for-Javascript-Games/blob/master/extra.html
 
  
 
