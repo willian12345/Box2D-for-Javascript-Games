@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <title>Box2dJS</title>
+      <style>
+         html,body{padding: 0; margin: 0;}
+         canvas{
+            position: absolute;
+         }
+      </style>
+   </head>
+   <body onload="init();">
+      <canvas id="debug" width="640" height="480" style="background-color:#333333;"></canvas>
+      <canvas id="canvas" width="640" height="480"  ></canvas>
+   </body>
+   <script src="../../js/Box2d.min.js"></script>
+   <script src="../../js/createjs-2015.11.26.min.js"></script>
+   <script> 
+      
+
+      function init() {
+         var   b2Vec2 = Box2D.Common.Math.b2Vec2,
+            b2AABB = Box2D.Collision.b2AABB,
+            b2BodyDef = Box2D.Dynamics.b2BodyDef,
+            b2Body = Box2D.Dynamics.b2Body,
+            b2FixtureDef = Box2D.Dynamics.b2FixtureDef,
+            b2Fixture = Box2D.Dynamics.b2Fixture,
+            b2World = Box2D.Dynamics.b2World,
+            b2ContactListener = Box2D.Dynamics.b2ContactListener,
+            b2MassData = Box2D.Collision.Shapes.b2MassData,
+            b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape,
+            b2CircleShape = Box2D.Collision.Shapes.b2CircleShape,
+            b2DebugDraw = Box2D.Dynamics.b2DebugDraw,
+            b2MouseJointDef =  Box2D.Dynamics.Joints.b2MouseJointDef;
+
+         class CustomContactListener extends b2ContactListener {
+            KILLBRICK = 25;
+            KILLPIG = 5;
+            PostSolve(contact, impulse) {
+               console.log("a collision has been post solved");
+               var fixtureA = contact.GetFixtureA();
+               var fixtureB = contact.GetFixtureB();
+
+               var dataA = fixtureA.GetBody().GetUserData();
+               var dataB = fixtureB.GetBody().GetUserData();
+               var force = impulse.normalImpulses[0];
+               switch (dataA) {
+                  case "pig" :
+                     if (force > this.KILLPIG) {
+                        fixtureA.GetBody().SetUserData("remove");
+                     }
+                     break;
+                  case "brick" :
+                  if (force > this.KILLBRICK) {
+                     fixtureA.GetBody().SetUserData("remove");
+                  }
+                     break;
+               }
+               switch (dataB) {
+                  case "pig" :
+                     if (force > this.KILLPIG) {
+                        fixtureB.GetBody().SetUserData("remove");
+                     }
+                     break;
+                  case "brick" :
+                     if (force > this.KILLBRICK) {
+                        fixtureB.GetBody().SetUserData("remove");
+                     }
+                     break;
+               }
+            }
+         }
+
+         var worldScale = 30; // box2d中以米为单位，1米=30像素
+         var gravity = new b2Vec2(0, 5);
+         var sleep = true;
+         var world;
+
+
+         var slingX = 100;
+         var slingY = 250;
+         var slingR = 75;
+         var stage = new createjs.Stage("canvas");
+         var theBird = new createjs.Shape();
+
+         function main(){
+            world = new b2World(gravity, sleep);
+            world.SetContactListener(new CustomContactListener());
+            debugDraw();
+            floor();
+
+            brick(402,431,140,36);
+            brick(544,431,140,36);
+            brick(342,396,16,32);
+            brick(604,396,16,32);
+
+            brick(416,347,16,130);
+            brick(532,347,16,130);
+            brick(474,273,132,16);
+            brick(474,257,32,16);
+
+            brick(445,199,16,130);
+            brick(503,199,16,130);
+            brick(474,125,58,16);
+            brick(474,100,32,32);
+            brick(474,67,16,32);
+
+            brick(474,404,64,16);
+            brick(450,363,16,64);
+            brick(498,363,16,64);
+            brick(474,322,64,16);
+            
+            pig(474,232,16);
+
+            // 画出大圆
+            var slingCanvas = new createjs.Shape();
+            slingCanvas.graphics.setStrokeStyle(1, "round").beginStroke("white");
+            slingCanvas.graphics.drawCircle(0, 0, slingR);
+            stage.addChild(slingCanvas);
+            slingCanvas.x = slingX;
+            slingCanvas.y = slingY;
+            
+            // 画出小鸟
+            theBird.graphics.setStrokeStyle(1, "round").beginStroke("white");
+            theBird.graphics.beginFill('white').drawCircle(0,0,15);
+            stage.addChild(theBird);
+            theBird.x = slingX;
+            theBird.y = slingY;
+
+            // 拖动小鸟
+            theBird.on("pressmove", birdMove);
+            theBird.on("pressup", birdRelease)
+
+            createjs.Ticker.timingMode = createjs.Ticker.RAF;
+            createjs.Ticker.on("tick", function(){
+               stage.update();// 这是 CreateJS 舞台更新所需要的
+
+               world.DrawDebugData(); // 为了显示出createjs对象，这里不再绘制box2d对象至canvas
+               world.Step(1/30, 10, 10);// 更新世界模拟
+               world.ClearForces(); // 清除作用力
+
+               // 销毁标记为 remove 的刚体
+               for (var b = world.GetBodyList();
+                  b; b=b.GetNext()) {
+                     if (b.GetUserData()=="remove") {
+                        world.DestroyBody(b);
+                     }
+                  }
+            });
+         }
+         main();
+
+
+         function  birdMove(e){
+            const mouseX = e.stageX;
+            const mouseY = e.stageY;
+            theBird.x = mouseX;
+            theBird.y = mouseY;
+            var distanceX = theBird.x-slingX;
+            var distanceY = theBird.y-slingY;
+            if (distanceX*distanceX+distanceY*distanceY>slingR*slingR) {
+               var birdAngle = Math.atan2(distanceY,distanceX);
+               theBird.x=slingX+slingR*Math.cos(birdAngle);
+               theBird.y=slingY+slingR*Math.sin(birdAngle);
+            }
+         }
+
+         function birdRelease(e){
+            var distanceX = theBird.x-slingX;
+            var distanceY = theBird.y-slingY;
+            var velocityX = distanceX*-1/5;
+            var velocityY = distanceY*-1/5;
+            var birdVelocity = new b2Vec2(velocityX,velocityY);
+            var sphereX = theBird.x/worldScale;
+            var sphereY = theBird.y/worldScale;
+            var r = 15 / worldScale;
+            var bodyDef = new b2BodyDef();
+            bodyDef.position.Set(sphereX,sphereY);
+            bodyDef.type = b2Body.b2_dynamicBody;
+            var circleShape  = new b2CircleShape(r);  
+            var fixtureDef = new b2FixtureDef();
+            fixtureDef.shape=circleShape;
+            fixtureDef.density = 4;
+            fixtureDef.restitution = 0.4;
+            fixtureDef.friction = 0.5;
+            var physicsBird = world.CreateBody(bodyDef);
+            physicsBird.SetLinearVelocity(birdVelocity);
+            physicsBird.CreateFixture(fixtureDef);
+            stage.removeChild(theBird);
+         }
+
+         function brick(px, py, w, h, s){
+            var bodyDef = new b2BodyDef();
+            bodyDef.position.Set(px/worldScale, py/worldScale);
+            bodyDef.type = b2Body.b2_dynamicBody;
+            bodyDef.userData = "brick";
+            bodyDef.userData = s;
+            var polygonShape = new b2PolygonShape();
+            polygonShape.SetAsBox(w/2/worldScale, h/2/worldScale);
+            var fixtureDef = new b2FixtureDef();
+            fixtureDef.shape = polygonShape;
+            fixtureDef.density = 2;
+            fixtureDef.restitution = .4;
+            fixtureDef.friction = .5;
+            var theBrick = world.CreateBody(bodyDef);
+            theBrick.CreateFixture(fixtureDef);
+         }
+
+         function pig(pX, pY, r ) {
+            var bodyDef = new b2BodyDef();
+            bodyDef.position.Set(pX/worldScale,pY/worldScale);
+            bodyDef.type=b2Body.b2_dynamicBody;
+            bodyDef.userData="pig"; 
+            var pigShape = new b2CircleShape(r/worldScale);
+            var fixtureDef = new b2FixtureDef();
+            fixtureDef.shape=pigShape;
+            fixtureDef.density=1;
+            fixtureDef.restitution=0.4;
+            fixtureDef.friction=0.5;
+            var thePig = world.CreateBody(bodyDef);
+            thePig.CreateFixture(fixtureDef);
+         }
+
+         function sphere(px, py, r){
+            var bodyDef = new b2BodyDef();
+            bodyDef.position.Set(px/worldScale, py/worldScale);
+            bodyDef.type = b2Body.b2_dynamicBody
+            bodyDef.userData = py;
+            var circleShape = new b2CircleShape(r/worldScale);
+            var fixtureDef = new b2FixtureDef();
+            fixtureDef.shape = circleShape;
+            fixtureDef.density = 1;
+            fixtureDef.restitution = .4
+            fixtureDef.friction = .5;
+            var theSphere = world.CreateBody(bodyDef);
+            theSphere.CreateFixture(fixtureDef);
+            return theSphere;
+         }
+
+         function floor(){
+            var bodyDef = new b2BodyDef();
+            bodyDef.position.Set(320/worldScale, 465/worldScale);
+            var polygonShape = new b2PolygonShape();
+            polygonShape.SetAsBox(320/worldScale, 15/worldScale);
+            var fixtureDef = new b2FixtureDef();
+            fixtureDef.shape = polygonShape;
+            fixtureDef.restitution = .4;
+            fixtureDef.friction = .5;
+            var theFloor = world.CreateBody(bodyDef);
+            theFloor.CreateFixture(fixtureDef);
+         }
+
+         //setup debug draw
+         function debugDraw(){
+            var debugDraw = new b2DebugDraw();
+            debugDraw.SetSprite(document.getElementById('debug').getContext('2d'));
+            debugDraw.SetDrawScale(worldScale);
+            debugDraw.SetFillAlpha(0.5);
+            debugDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit);
+            world.SetDebugDraw(debugDraw);
+         }
+      };
+   </script>
+</html>
