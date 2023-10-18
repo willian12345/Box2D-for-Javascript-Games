@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Box2D for javascript Games chapter 6</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        html,
+        body {
+            padding: 0;
+            margin: 0;
+        }
+
+        canvas {
+            position: absolute;
+        }
+    </style>
+</head>
+
+<body onload="init();">
+    <canvas id="canvas" width="640" height="480" style="background-color:#333333;"></canvas>
+</body>
+<script src="../../js/Box2d.min.js"></script>
+<script>
+
+    function init() {
+        const b2Vec2 = Box2D.Common.Math.b2Vec2,
+            b2AABB = Box2D.Collision.b2AABB,
+            b2BodyDef = Box2D.Dynamics.b2BodyDef,
+            b2Body = Box2D.Dynamics.b2Body,
+            b2FixtureDef = Box2D.Dynamics.b2FixtureDef,
+            b2Fixture = Box2D.Dynamics.b2Fixture,
+            b2World = Box2D.Dynamics.b2World,
+            b2MassData = Box2D.Collision.Shapes.b2MassData,
+            b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape,
+            b2CircleShape = Box2D.Collision.Shapes.b2CircleShape,
+            b2DebugDraw = Box2D.Dynamics.b2DebugDraw,
+            b2MouseJointDef = Box2D.Dynamics.Joints.b2MouseJointDef,
+            b2MouseJoint = Box2D.Dynamics.Joints.b2MouseJoint
+        b2DistanceJointDef = Box2D.Dynamics.Joints.b2DistanceJointDef
+        b2RevoluteJoint = Box2D.Dynamics.Joints.b2RevoluteJoint
+        b2RevoluteJointDef = Box2D.Dynamics.Joints.b2RevoluteJointDef
+            ;
+
+        const worldScale = 30; // box2d 中以米为单位，1米=30像素
+        const gravity = new b2Vec2(0, 9.81);
+        const sleep = true;
+        let world;
+        let mouseJoint;
+        const stage = document.querySelector('#canvas');
+        function main() {
+            world = new b2World(gravity, sleep);
+            debugDraw();
+
+            ground();
+            var frontCart = addCart(200, 430);
+            var rearCart = addCart(100, 430);
+            setInterval(updateWorld, 1000 / 60);
+        }
+        main();
+
+        // 地面
+        function ground() {
+            var bodyDef = new b2BodyDef();
+            bodyDef.position.Set(320 / worldScale, 470 / worldScale);
+            var polygonShape = new b2PolygonShape();
+            polygonShape.SetAsBox(320 / worldScale, 10 / worldScale);
+            var fixtureDef = new b2FixtureDef();
+            fixtureDef.shape = polygonShape;
+            var groundBody = world.CreateBody(bodyDef);
+            groundBody.CreateFixture(fixtureDef);
+        }
+
+        function addCart(pX, pY) {
+            var bodyDef = new b2BodyDef();
+            bodyDef.position.Set(pX / worldScale, pY / worldScale);
+            var polygonShape = new b2PolygonShape();
+            polygonShape.SetAsBox(40 / worldScale, 20 / worldScale);
+            var fixtureDef = new b2FixtureDef();
+            fixtureDef.shape = polygonShape;
+            fixtureDef.density = 1;
+            fixtureDef.restitution = 0.5;
+            fixtureDef.friction = 0.5;
+            var body = world.CreateBody(bodyDef);
+            body.CreateFixture(fixtureDef);
+            var frontWheel = addWheel(pX + 20, pY + 15);
+            var rearWheel = addWheel(pX - 20, pY + 15);
+            return body;
+        }
+
+        function addWheel(pX, pY) {
+            var bodyDef = new b2BodyDef();
+            bodyDef.position.Set(pX / worldScale, pY / worldScale);
+            var circleShape = new b2CircleShape(0.5);
+            var fixtureDef = new b2FixtureDef();
+            fixtureDef.shape = circleShape;
+            fixtureDef.density = 1;
+            fixtureDef.restitution = 0.5;
+            fixtureDef.friction = 0.5;
+            var body = world.CreateBody(bodyDef);
+            body.CreateFixture(fixtureDef);
+            return body;
+        }
+
+        function createJoint(e) {
+            world.QueryPoint((fixture) => queryCallback(fixture, e), mouseToWorld(e));
+        }
+
+        function mouseToWorld(e) {
+            const mouseX = e.x;
+            const mouseY = e.y;
+            return new b2Vec2(mouseX / worldScale, mouseY / worldScale);
+        }
+
+        function queryCallback(fixture, e) {
+            var touchedBody = fixture.GetBody();
+            if (touchedBody.GetType() === b2Body.b2_dynamicBody) {
+                var jointDef = new b2MouseJointDef();
+                jointDef.bodyA = world.GetGroundBody();
+                jointDef.bodyB = touchedBody;
+                jointDef.target = mouseToWorld(e);
+                jointDef.maxForce = 1000 * touchedBody.GetMass();
+                mouseJoint = world.CreateJoint(jointDef);
+                stage.addEventListener('mousemove', moveJoint);
+                stage.addEventListener('mouseup', killJoint);
+            }
+            return false;
+        }
+
+        function moveJoint(e) {
+            mouseJoint.SetTarget(mouseToWorld(e));
+        }
+
+        function killJoint(e) {
+            world.DestroyJoint(mouseJoint);
+            mouseJoint = null;
+            stage.removeEventListener('mousemove', moveJoint);
+        }
+
+        function updateWorld() {
+            world.Step(1 / 30, 10, 10);// 更新世界模拟
+            world.DrawDebugData(); // 显示刚体debug轮廓
+            world.ClearForces(); // 清除作用力
+        }
+
+
+        function debugDraw() {
+            var debugDraw = new b2DebugDraw();
+            debugDraw.SetSprite(document.getElementById("canvas").getContext("2d"));
+            debugDraw.SetDrawScale(worldScale);
+            debugDraw.SetFillAlpha(0.5);
+            debugDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit);
+            world.SetDebugDraw(debugDraw);
+        }
+    };
+
+</script>
+
+
+</html>

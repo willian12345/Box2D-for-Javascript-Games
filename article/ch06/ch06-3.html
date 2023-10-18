@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <title>Box2D for javascript Games chapter 6</title>
     <meta charset="UTF-8">
@@ -38,6 +37,7 @@
             b2DebugDraw = Box2D.Dynamics.b2DebugDraw, 
             b2MouseJointDef = Box2D.Dynamics.Joints.b2MouseJointDef,
             b2MouseJoint = Box2D.Dynamics.Joints.b2MouseJoint
+            b2DistanceJointDef = Box2D.Dynamics.Joints.b2DistanceJointDef
         ;
 
         const worldScale = 30; // box2d 中以米为单位，1米=30像素
@@ -45,7 +45,7 @@
         const sleep = true;
         let world;
         let mouseJoint;
-
+        const stage = document.querySelector('#canvas');
         function main(){
             
             world = new b2World(gravity, sleep);
@@ -71,15 +71,26 @@
             var box2 = world.CreateBody(bodyDef);
             box2.CreateFixture(fixtureDef);
 
+            bodyDef.position.Set(420/worldScale,430/worldScale);
+            var box3 = world.CreateBody(bodyDef);
+            box3.CreateFixture(fixtureDef);
+            var dJoint = new b2DistanceJointDef();
+            dJoint.bodyA = box2;
+            dJoint.bodyB = box3;
+            dJoint.localAnchorA = new b2Vec2(0,0);
+            dJoint.localAnchorB = new b2Vec2(0,0);
+            dJoint.length = 100 / worldScale;
+            var distanceJoint = world.CreateJoint(dJoint);
+            
             setInterval(updateWorld, 1000 / 60);
             
-            document.querySelector('#canvas').addEventListener('mousedown', createJoint)
+            stage.addEventListener('mousedown', createJoint)
         }
         main();
         
 
         function createJoint(e){
-            world.QueryPoint(queryCallback, mouseToWorld(e));
+            world.QueryPoint((fixture)=> queryCallback(fixture, e), mouseToWorld(e));
         }
 
         function mouseToWorld(e) {
@@ -88,12 +99,29 @@
             return new b2Vec2(mouseX/worldScale,mouseY/worldScale);
         }
 
-        function queryCallback(fixture)  {
+        function queryCallback(fixture, e)  {
             var touchedBody = fixture.GetBody();
             if (touchedBody.GetType() === b2Body.b2_dynamicBody) {
-                console.log("will create joint here");
+                var jointDef = new b2MouseJointDef();
+                jointDef.bodyA = world.GetGroundBody();
+                jointDef.bodyB = touchedBody;
+                jointDef.target = mouseToWorld(e);
+                jointDef.maxForce = 1000 * touchedBody.GetMass();
+                mouseJoint = world.CreateJoint(jointDef);
+                stage.addEventListener('mousemove', moveJoint);
+                stage.addEventListener('mouseup', killJoint);
             }
             return false;
+        }
+
+        function moveJoint(e){
+            mouseJoint.SetTarget(mouseToWorld(e));
+        }
+
+        function killJoint(e){
+            world.DestroyJoint(mouseJoint);
+            mouseJoint = null;
+            stage.removeEventListener('mousemove', moveJoint);
         }
 
         function updateWorld() {

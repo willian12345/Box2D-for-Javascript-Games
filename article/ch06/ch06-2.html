@@ -45,7 +45,7 @@
         const sleep = true;
         let world;
         let mouseJoint;
-
+        const stage = document.querySelector('#canvas');
         function main(){
             
             world = new b2World(gravity, sleep);
@@ -73,13 +73,13 @@
 
             setInterval(updateWorld, 1000 / 60);
             
-            document.querySelector('#canvas').addEventListener('mousedown', createJoint)
+            stage.addEventListener('mousedown', createJoint)
         }
         main();
         
 
         function createJoint(e){
-            world.QueryPoint(queryCallback, mouseToWorld(e));
+            world.QueryPoint((fixture)=> queryCallback(fixture, e), mouseToWorld(e));
         }
 
         function mouseToWorld(e) {
@@ -88,12 +88,29 @@
             return new b2Vec2(mouseX/worldScale,mouseY/worldScale);
         }
 
-        function queryCallback(fixture)  {
+        function queryCallback(fixture, e)  {
             var touchedBody = fixture.GetBody();
             if (touchedBody.GetType() === b2Body.b2_dynamicBody) {
-                console.log("will create joint here");
+                var jointDef = new b2MouseJointDef();
+                jointDef.bodyA = world.GetGroundBody();
+                jointDef.bodyB = touchedBody;
+                jointDef.target = mouseToWorld(e);
+                jointDef.maxForce = 1000 * touchedBody.GetMass();
+                mouseJoint = world.CreateJoint(jointDef);
+                stage.addEventListener('mousemove', moveJoint);
+                stage.addEventListener('mouseup', killJoint);
             }
             return false;
+        }
+
+        function moveJoint(e){
+            mouseJoint.SetTarget(mouseToWorld(e));
+        }
+
+        function killJoint(e){
+            world.DestroyJoint(mouseJoint);
+            mouseJoint = null;
+            stage.removeEventListener('mousemove', moveJoint);
         }
 
         function updateWorld() {
