@@ -61,19 +61,17 @@
             ground();
             var frontCart = addCart(200, 430, true);
             var rearCart = addCart(100, 430, false);
-
             var dJoint = new b2DistanceJointDef();
-            dJoint.bodyA=frontCart;
-            dJoint.bodyB=rearCart;
-            dJoint.localAnchorA=new b2Vec2(0,0);
-            dJoint.localAnchorB=new b2Vec2(0,0);
-            dJoint.length=100/worldScale;
-            
-            // var distanceJoint = world.CreateJoint(dJoint)
-            
+            dJoint.bodyA = frontCart;
+            dJoint.bodyB = rearCart;
+            dJoint.localAnchorA = new b2Vec2(0, 0);
+            dJoint.localAnchorB = new b2Vec2(0, 0);
+            dJoint.length = 100 / worldScale;
+            var distanceJoint = world.CreateJoint(dJoint)
 
-            // document.addEventListener("keydown", keyPressed)
-            // document.addEventListener("keyup", keyReleased)
+
+            document.addEventListener("keydown", keyPressed)
+            document.addEventListener("keyup", keyReleased)
 
             setInterval(updateWorld, 1000 / 60);
         }
@@ -125,33 +123,34 @@
             fixtureDef.friction = 0.5;
             var body = world.CreateBody(bodyDef);
             body.CreateFixture(fixtureDef);
-            
-            
+
+
             var frontWheel = addWheel(pX + 20, pY + 15);
             var rearWheel = addWheel(pX - 20, pY + 15);
-            // var rJoint = new b2RevoluteJointDef();
-            // rJoint.bodyA = body;
-            // rJoint.bodyB = frontWheel;
-            // rJoint.localAnchorA.Set(20 / worldScale, 15 / worldScale);
-            // rJoint.localAnchorB.Set(0, 0);
+            var rJoint = new b2RevoluteJointDef();
+            rJoint.bodyA = body;
+            rJoint.bodyB = frontWheel;
+            rJoint.localAnchorA.Set(20 / worldScale, 15 / worldScale);
+            rJoint.localAnchorB.Set(0, 0);
 
-            // if (motor) {
-            //     rJoint.enableMotor = true;
-            //     rJoint.maxMotorTorque = 1000;
-            //     rJoint.motorSpeed = 0;
-            //     frj = world.CreateJoint(rJoint);
-            // } else {
-            //     var rj = world.CreateJoint(rJoint);
-            // }
+            if (motor) {
+                rJoint.enableMotor = true;
+                rJoint.maxMotorTorque = 1000;
+                rJoint.motorSpeed = 0;
+                frj = world.CreateJoint(rJoint);
+            } else {
+                var rj = world.CreateJoint(rJoint);
+            }
 
-            // rJoint.bodyB = rearWheel;
-            // rJoint.localAnchorA.Set(-20 / worldScale, 15 / worldScale);
+            rJoint.bodyB = rearWheel;
+            rJoint.localAnchorA.Set(-20 / worldScale, 15 / worldScale);
 
-            // if (motor) {
-            //     rrj = world.CreateJoint(rJoint);
-            // } else {
-            //     rj = world.CreateJoint(rJoint);
-            // }
+            if (motor) {
+                rrj = world.CreateJoint(rJoint);
+            } else {
+                rj = world.CreateJoint(rJoint);
+            }
+            return body;
         }
 
         function addWheel(pX, pY) {
@@ -205,21 +204,21 @@
         }
 
         function updateWorld() {
-            // if (left) {
-            //     motorSpeed -= 0.1;
-            // }
-            // if (right) {
-            //     motorSpeed += 0.1;
-            // }
-            // motorSpeed * 0.99;
-            // if (motorSpeed > 5) {
-            //     motorSpeed = 5;
-            // }
-            // if (motorSpeed < -5) {
-            //     motorSpeed = -5;
-            // }
-            // frj.SetMotorSpeed(motorSpeed);
-            // rrj.SetMotorSpeed(motorSpeed);
+            if (left) {
+                motorSpeed -= 0.1;
+            }
+            if (right) {
+                motorSpeed += 0.1;
+            }
+            motorSpeed * 0.99;
+            if (motorSpeed > 5) {
+                motorSpeed = 5;
+            }
+            if (motorSpeed < -5) {
+                motorSpeed = -5;
+            }
+            frj.SetMotorSpeed(motorSpeed);
+            rrj.SetMotorSpeed(motorSpeed);
             world.Step(1 / 30, 10, 10);// 更新世界模拟
             world.DrawDebugData(); // 显示刚体debug轮廓
             world.ClearForces(); // 清除作用力
