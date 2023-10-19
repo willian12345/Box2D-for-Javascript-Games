@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>第七章 子弹和感应器 -- Box2d For Javascript Games</title>
+   <style>
+      html,
+      body {
+         padding: 0;
+         margin: 0;
+      }
+   </style>
+</head>
+
+<body onload="init();">
+   <canvas id="canvas" width="640" height="480" style="background-color:#333333;"></canvas>
+</body>
+<script src="../../js/Box2d.min.js"></script>
+<script>
+
+   function init() {
+      var b2Vec2 = Box2D.Common.Math.b2Vec2
+         , b2AABB = Box2D.Collision.b2AABB
+         , b2BodyDef = Box2D.Dynamics.b2BodyDef
+         , b2Body = Box2D.Dynamics.b2Body
+         , b2FixtureDef = Box2D.Dynamics.b2FixtureDef
+         , b2Fixture = Box2D.Dynamics.b2Fixture
+         , b2World = Box2D.Dynamics.b2World
+         , b2MassData = Box2D.Collision.Shapes.b2MassData
+         , b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape
+         , b2CircleShape = Box2D.Collision.Shapes.b2CircleShape
+         , b2DebugDraw = Box2D.Dynamics.b2DebugDraw
+         , b2MouseJointDef = Box2D.Dynamics.Joints.b2MouseJointDef
+         ;
+
+      var worldScale = 30; // box2d中以米为单位，1米=30像素
+      var gravity = new b2Vec2(0, 10);
+      var sleep = true;
+      var world;
+
+      const stage = document.querySelector('#canvas');
+      function main() {
+         world = new b2World(gravity, sleep);
+         debugDraw();
+
+         var bodyDef = new b2BodyDef();
+         bodyDef.position.Set(320 / worldScale, 470 / worldScale);
+         var polygonShape = new b2PolygonShape();
+         polygonShape.SetAsBox(320 / worldScale, 10 / worldScale);
+         var fixtureDef = new b2FixtureDef();
+         fixtureDef.shape = polygonShape;
+         fixtureDef.density = 1;
+         fixtureDef.restitution = 0.5;
+         fixtureDef.friction = 0.5;
+         var body = world.CreateBody(bodyDef);
+         body.CreateFixture(fixtureDef);
+
+         bodyDef.position.Set(600 / worldScale, 240 / worldScale);
+         bodyDef.type = b2Body.b2_dynamicBody;
+         polygonShape.SetAsBox(10 / worldScale, 220 / worldScale);
+         var body2 = world.CreateBody(bodyDef);
+         body2.CreateFixture(fixtureDef);
+
+         bodyDef.position.Set(320 / worldScale, 455 / worldScale);
+         bodyDef.bullet = true;
+         polygonShape.SetAsBox(5 / worldScale, 5 / worldScale);
+         var body3 = world.CreateBody(bodyDef);
+         body3.CreateFixture(fixtureDef);
+         body3.SetLinearVelocity(new b2Vec2(100, -10));
+         // 鼠标多次点击后查看效果
+         stage.addEventListener('click', updateWorld);
+         // setInterval(updateWorld, 1000 / 60);
+      }
+      main();
+
+
+
+
+      function updateWorld() {
+         world.Step(1 / 30, 10, 10);
+         world.DrawDebugData(); // 显示刚体debug轮廓
+         world.ClearForces(); // 清除作用力
+      }
+
+      function debugDraw() {
+         var debugDraw = new b2DebugDraw();
+         debugDraw.SetSprite(document.getElementById("canvas").getContext("2d"));
+         debugDraw.SetDrawScale(worldScale);
+         debugDraw.SetFillAlpha(0.5);
+         debugDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit);
+         world.SetDebugDraw(debugDraw);
+      }
+   };
+
+</script>
+
+
+</html>
