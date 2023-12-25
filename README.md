@@ -1,7 +1,7 @@
 
-> 2023 年 10 月更新：说好的不定时更新果然做到了，6年后要不是有人 star 我都快忘了这个项目了，继续更新吧
+> 2023 年 12 月更新
 
-# Box2D for Javascript Games 持续改写中
+# Box2D for Javascript Games 改写完成
 
 原本的书是 Box2D for Flash Games 版本用的是 AS3.0 脚本并且运行环境是 Flash
 
